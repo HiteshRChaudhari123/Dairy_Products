@@ -7,6 +7,7 @@
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
     "seed": "node src/seed.js",
+    "seed:catalog": "node src/seed.js --catalog",
     "migrate": "node src/migrate.js",
     "test": "node --test --test-concurrency=1 test/*.test.js",
     "security:audit": "node scripts/security-audit.js",

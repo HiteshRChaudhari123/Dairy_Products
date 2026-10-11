@@ -50,6 +50,12 @@ The same setup by hand: Web Service, root directory empty, build `npm install &&
 `NODE_ENV=production` and the variables below. Use the Starter plan or above: the free plan sleeps, and the
 background jobs (9 PM deliveries, renewals) don't run while it sleeps.
 
+**Stock a new live store:** a production database starts empty (only the owner account; demo accounts are never
+loaded). To add the catalogue (34 products with photos, categories, banners, delivery zones, coupons, CMS pages and
+the plans as drafts, with no demo users or orders), set `SEED_CATALOG=true` on the service and redeploy once, then
+remove it. It only runs while the store has no categories or products. Locally against Atlas: `npm --prefix server run seed:catalog`.
+Review the prices, stock, zones, coupons, CMS text and plans in the panel before launch, then publish the plans.
+
 To host the website separately instead (e.g. Vercel with `client/vercel.json`), set `SERVE_CLIENT=false` on the API
 and `VITE_API_URL` on the website.
 

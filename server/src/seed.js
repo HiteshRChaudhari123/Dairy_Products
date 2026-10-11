@@ -108,11 +108,13 @@ export async function ensureSuperadmin() {
   console.log(`👑 Super admin created for ${env.superadminEmail}. Log in and change the password, then remove SUPERADMIN_PASSWORD from the environment.`)
 }
 
-export async function seed({ reset = true } = {}) {
-  if (reset) await mongoose.connection.db.dropDatabase()
-  await Promise.all(mongoose.modelNames().map((n) => mongoose.model(n).syncIndexes()))
-
-  await Setting.create({ key: 'global' })
+/**
+ * The shop catalogue: delivery zones, categories, products (with their photos), banners, coupons, CMS pages and the
+ * subscription plans. No accounts, orders, reviews or wallet money. Used by the demo seed and, once, to stock a new
+ * live store (SEED_CATALOG=true or `npm run seed:catalog`). `plansStatus: 'draft'` keeps the demo plans (invented
+ * prices and terms) off sale until the owner reviews and publishes them.
+ */
+export async function seedCatalog({ plansStatus = 'published' } = {}) {
   const zones = await Zone.insertMany([
     { name: 'Central', branch: 'Main Warehouse', pincodes: ['411001', '411002', '411004', '411005', '411011'] },
     { name: 'West', branch: 'Main Warehouse', pincodes: ['411038', '411045', '411052', '411057'] },
@@ -172,6 +174,98 @@ export async function seed({ reset = true } = {}) {
   ])
 
   await Page.insertMany(PAGES.map(([slug, title, content]) => ({ slug, title, content })))
+
+  // ── Demo plans (development data only: real prices, benefits and policies are set by the owner in the panel) ──
+  const owner = await User.findOne({ role: 'superadmin' })
+  const published = plansStatus === 'published'
+  const demoPlan = async (kind, sortOrder, version) => {
+    const plan = await Plan.create({ kind, name: version.name, slug: slugify(version.name), status: published ? 'published' : 'draft', sortOrder, latestVersion: 1, createdBy: owner?._id })
+    const v = await PlanVersion.create({ ...version, plan: plan._id, version: 1, status: published ? 'published' : 'draft', publishedAt: published ? new Date() : undefined, createdBy: owner?._id })
+    if (published) {
+      plan.publishedVersion = v._id
+      await plan.save()
+    }
+    return plan
+  }
+  const policy = (over = {}) => ({
+    pause: { allowed: true, minDays: 1, maxDays: 30, noticeDays: 0 },
+    cancellation: { mode: 'end_of_term', refund: 'none', refundUnusedBalance: true },
+    renewal: { autoRenewAllowed: true },
+    gracePeriodDays: 3,
+    retry: { attempts: 3, intervalHours: 24 },
+    ...over,
+  })
+  await demoPlan('membership', 0, {
+    name: 'Gavyora Plus Monthly',
+    tagline: 'Free delivery and member prices for a month',
+    description: 'Member discount on every store order and free delivery above a small minimum.',
+    termsText: 'Demo terms for development. Replace with terms reviewed by your lawyer before launch.',
+    priceMinor: 9900,
+    interval: 'month',
+    durationDays: 30,
+    taxPercent: 18,
+    benefits: { discountPercent: 5, maxDiscountPerOrderMinor: 10000, freeDelivery: true, freeDeliveryMinOrderMinor: 9900, prioritySupport: true, perks: ['Early access to new products'] },
+    policies: policy(),
+  })
+  await demoPlan('membership', 1, {
+    name: 'Gavyora Plus Yearly',
+    tagline: 'All Plus benefits for a year',
+    description: 'The same benefits as Plus Monthly, billed once a year.',
+    termsText: 'Demo terms for development. Replace with terms reviewed by your lawyer before launch.',
+    priceMinor: 99900,
+    interval: 'year',
+    durationDays: 365,
+    taxPercent: 18,
+    benefits: { discountPercent: 7, maxDiscountPerOrderMinor: 15000, freeDelivery: true, freeDeliveryMinOrderMinor: 0, prioritySupport: true, perks: ['Early access to new products'] },
+    policies: policy({ cancellation: { mode: 'immediate', refund: 'prorata', refundUnusedBalance: true } }),
+  })
+  const milk = products.filter((p) => ['Fresh Milk', 'Full Cream Milk', 'Double Toned Milk', 'Buffalo Milk', 'A2 Milk', 'Cow Milk (Glass Bottle)'].includes(p.name))
+  await demoPlan('product', 2, {
+    name: 'Daily Milk Prepaid',
+    tagline: 'Fresh milk every morning, paid monthly in advance',
+    description: 'Choose your milk and days. Pay for 30 days of deliveries up front; skipped days stay in your balance.',
+    termsText: 'Demo terms for development. Unused balance is refunded to your wallet if you cancel.',
+    priceMinor: 0,
+    interval: 'month',
+    durationDays: 30,
+    product: { billingMode: 'prepaid', eligible: milk.map((p) => ({ product: p._id })), discountPercent: 5, minQty: 1, maxQty: 6, maxItems: 2, frequencies: ['daily', 'alternate', 'custom'], deliveryFeeMinor: 0, prepayDays: 30 },
+    policies: policy({ pause: { allowed: true, minDays: 1, maxDays: 45, noticeDays: 0 } }),
+  })
+  await demoPlan('product', 3, {
+    name: 'Weekly Dairy Basket',
+    tagline: 'Mix milk, curd, chaas and more in one basket',
+    description: 'Build a basket of up to 6 products delivered on the days you choose. Pay as you go from your wallet.',
+    termsText: 'Demo terms for development.',
+    priceMinor: 0,
+    interval: 'month',
+    durationDays: 30,
+    product: { billingMode: 'per_delivery', eligible: [], discountPercent: 0, minQty: 1, maxQty: 10, maxItems: 6, frequencies: ['daily', 'alternate', 'weekly', 'custom'], deliveryFeeMinor: 0, prepayDays: 30 },
+    policies: policy(),
+  })
+
+  return { zones, cats, products }
+}
+
+/**
+ * Stock a live store with the catalogue once: only when it has no categories and no products yet, so it can never
+ * overwrite or duplicate what the owner has added. Plans arrive as drafts for the owner to review and publish.
+ */
+export async function stockCatalogIfEmpty() {
+  if ((await Category.exists({})) || (await Product.exists({}))) {
+    console.log('🛒 SEED_CATALOG: the store already has categories or products, so nothing was added. You can remove SEED_CATALOG.')
+    return false
+  }
+  await Setting.get()
+  const { products } = await seedCatalog({ plansStatus: 'draft' })
+  console.log(`🛒 Catalogue added: ${products.length} products with photos, categories, banners, zones, coupons, pages and draft plans. Remove SEED_CATALOG now.`)
+  return true
+}
+
+export async function seed({ reset = true } = {}) {
+  if (reset) await mongoose.connection.db.dropDatabase()
+  await Promise.all(mongoose.modelNames().map((n) => mongoose.model(n).syncIndexes()))
+  await Setting.create({ key: 'global' })
+  const { zones, products } = await seedCatalog()
 
   // ── Accounts (one per role) ──
   await User.create({ name: 'Gavyora Owner', email: env.superadminEmail, password: env.superadminPassword, role: 'superadmin' })
@@ -334,71 +428,6 @@ export async function seed({ reset = true } = {}) {
     })
   }
 
-  // ── Demo plans (development data only: real prices, benefits and policies are set by the owner in the panel) ──
-  const owner = await User.findOne({ role: 'superadmin' })
-  const demoPlan = async (kind, sortOrder, version) => {
-    const plan = await Plan.create({ kind, name: version.name, slug: slugify(version.name), status: 'published', sortOrder, latestVersion: 1, createdBy: owner._id })
-    const v = await PlanVersion.create({ ...version, plan: plan._id, version: 1, status: 'published', publishedAt: new Date(), createdBy: owner._id })
-    plan.publishedVersion = v._id
-    await plan.save()
-    return plan
-  }
-  const policy = (over = {}) => ({
-    pause: { allowed: true, minDays: 1, maxDays: 30, noticeDays: 0 },
-    cancellation: { mode: 'end_of_term', refund: 'none', refundUnusedBalance: true },
-    renewal: { autoRenewAllowed: true },
-    gracePeriodDays: 3,
-    retry: { attempts: 3, intervalHours: 24 },
-    ...over,
-  })
-  await demoPlan('membership', 0, {
-    name: 'Gavyora Plus Monthly',
-    tagline: 'Free delivery and member prices for a month',
-    description: 'Member discount on every store order and free delivery above a small minimum.',
-    termsText: 'Demo terms for development. Replace with terms reviewed by your lawyer before launch.',
-    priceMinor: 9900,
-    interval: 'month',
-    durationDays: 30,
-    taxPercent: 18,
-    benefits: { discountPercent: 5, maxDiscountPerOrderMinor: 10000, freeDelivery: true, freeDeliveryMinOrderMinor: 9900, prioritySupport: true, perks: ['Early access to new products'] },
-    policies: policy(),
-  })
-  await demoPlan('membership', 1, {
-    name: 'Gavyora Plus Yearly',
-    tagline: 'All Plus benefits for a year',
-    description: 'The same benefits as Plus Monthly, billed once a year.',
-    termsText: 'Demo terms for development. Replace with terms reviewed by your lawyer before launch.',
-    priceMinor: 99900,
-    interval: 'year',
-    durationDays: 365,
-    taxPercent: 18,
-    benefits: { discountPercent: 7, maxDiscountPerOrderMinor: 15000, freeDelivery: true, freeDeliveryMinOrderMinor: 0, prioritySupport: true, perks: ['Early access to new products'] },
-    policies: policy({ cancellation: { mode: 'immediate', refund: 'prorata', refundUnusedBalance: true } }),
-  })
-  const milk = products.filter((p) => ['Fresh Milk', 'Full Cream Milk', 'Double Toned Milk', 'Buffalo Milk', 'A2 Milk', 'Cow Milk (Glass Bottle)'].includes(p.name))
-  await demoPlan('product', 2, {
-    name: 'Daily Milk Prepaid',
-    tagline: 'Fresh milk every morning, paid monthly in advance',
-    description: 'Choose your milk and days. Pay for 30 days of deliveries up front; skipped days stay in your balance.',
-    termsText: 'Demo terms for development. Unused balance is refunded to your wallet if you cancel.',
-    priceMinor: 0,
-    interval: 'month',
-    durationDays: 30,
-    product: { billingMode: 'prepaid', eligible: milk.map((p) => ({ product: p._id })), discountPercent: 5, minQty: 1, maxQty: 6, maxItems: 2, frequencies: ['daily', 'alternate', 'custom'], deliveryFeeMinor: 0, prepayDays: 30 },
-    policies: policy({ pause: { allowed: true, minDays: 1, maxDays: 45, noticeDays: 0 } }),
-  })
-  await demoPlan('product', 3, {
-    name: 'Weekly Dairy Basket',
-    tagline: 'Mix milk, curd, chaas and more in one basket',
-    description: 'Build a basket of up to 6 products delivered on the days you choose. Pay as you go from your wallet.',
-    termsText: 'Demo terms for development.',
-    priceMinor: 0,
-    interval: 'month',
-    durationDays: 30,
-    product: { billingMode: 'per_delivery', eligible: [], discountPercent: 0, minQty: 1, maxQty: 10, maxItems: 6, frequencies: ['daily', 'alternate', 'weekly', 'custom'], deliveryFeeMinor: 0, prepayDays: 30 },
-    policies: policy(),
-  })
-
   await Ticket.create({
     user: customer._id,
     subject: 'Milk packet was leaking',
@@ -416,7 +445,10 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     process.exit(1)
   }
   await mongoose.connect(env.mongoUri)
-  if (env.isProd && !process.argv.includes('--allow-demo')) {
+  if (process.argv.includes('--catalog')) {
+    // `npm run seed:catalog`: products, categories, banners… without any demo accounts or orders.
+    await stockCatalogIfEmpty()
+  } else if (env.isProd && !process.argv.includes('--allow-demo')) {
     // Demo accounts have published passwords; never load them into a live store by accident.
     await ensureSuperadmin()
     console.log('Production: created the super admin only. Pass --allow-demo to load demo data (not recommended).')

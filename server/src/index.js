@@ -4,7 +4,7 @@ import { env, validateEnv } from './config/env.js'
 import { scheduleJobs } from './jobs/billing.js'
 import { migrate } from './migrate.js'
 import User from './models/User.js'
-import { ensureSuperadmin, seed } from './seed.js'
+import { ensureSuperadmin, seed, stockCatalogIfEmpty } from './seed.js'
 import { logger } from './utils/logger.js'
 
 const { warnings } = validateEnv()
@@ -17,6 +17,8 @@ const empty = (await User.countDocuments()) === 0
 if (!env.isProd && (isMemory || empty)) await seed({ reset: isMemory })
 else if (env.isProd && empty) await ensureSuperadmin()
 await migrate()
+// SEED_CATALOG=true stocks a new live store with the catalogue (products, photos, categories, banners…) once.
+if (process.env.SEED_CATALOG === 'true') await stockCatalogIfEmpty()
 scheduleJobs()
 
 const server = app.listen(env.port, () => {

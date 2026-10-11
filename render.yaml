@@ -46,6 +46,8 @@ services:
       - key: TRUST_PROXY
         value: "1"
       # Website calls the API on its own address (/api), so no VITE_API_URL is needed.
+      # Set SEED_CATALOG=true for one deploy to stock the new store (products, photos, categories, banners; no demo
+      # accounts), then delete it. It only runs while the store has no categories or products.
       # First owner account (created only when the database is empty). 12+ characters, not a demo password.
       - key: SUPERADMIN_EMAIL
         sync: false
