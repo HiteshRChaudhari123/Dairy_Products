@@ -1,0 +1,5 @@
+{
+  // Tailwind v4 at-rules (@theme, @utility, @custom-variant, @apply) are valid; VS Code's plain CSS linter doesn't know them.
+  "css.lint.unknownAtRules": "ignore",
+  "tailwindCSS.experimental.configFile": "client/src/index.css"
+}

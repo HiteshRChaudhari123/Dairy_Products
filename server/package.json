@@ -1,0 +1,38 @@
+{
+  "name": "gavyora-server",
+  "version": "1.0.0",
+  "description": "Gavyora API (Express + MongoDB)",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js",
+    "seed": "node src/seed.js",
+    "migrate": "node src/migrate.js",
+    "test": "node --test --test-concurrency=1 test/*.test.js",
+    "security:audit": "node scripts/security-audit.js",
+    "security:deps": "node scripts/dependency-audit.js"
+  },
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.4",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.7.0",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.10.2",
+    "morgan": "^1.12.1",
+    "node-cron": "^4.6.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "^11.3.0",
+    "supertest": "^7.3.1"
+  },
+  "engines": {
+    "node": ">=20.19"
+  }
+}

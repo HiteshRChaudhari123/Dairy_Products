@@ -1,0 +1,385 @@
+@import 'tailwindcss';
+
+/* Dark mode is the [data-theme="dark"] attribute on <html> (set before first paint in index.html). */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/* Gavyora design system: "Midnight Navy & Platinum".
+   Every colour is a semantic token defined here; [data-theme='dark'] swaps the values, so the
+   layout is identical in both themes. Components never hard-code colours. */
+@theme {
+  /* Surfaces */
+  --color-page: #d2e1fb; /* background: white sky blue (light mode only) */
+  --color-surface: #e4fcff; /* cards, navbar */
+  --color-surface-2: #edf0f4; /* secondary background */
+  --color-elevated: #e4fcff;
+  --color-footer: #e4fcff;
+
+  /* Text */
+  --color-ink: #1b2940;
+  --color-muted: #667387;
+  --color-subtle: #8a96a8;
+  --color-brand: #101d35; /* icons, links */
+
+  /* Primary (buttons, price, icons) */
+  --color-primary: #101d35;
+  --color-primary-dark: #1d3050; /* primary hover */
+  --color-on-primary: #ffffff;
+  --color-primary-soft: #eef2f6; /* hover background */
+  --color-primary-light: #8496ad;
+  --color-selected: #e4eaf1;
+
+  /* Accent (platinum blue) */
+  --color-accent: #8496ad;
+  --color-accent-soft: #edf1f6;
+  --color-gold: #8496ad; /* legacy name: the accent highlight */
+  --color-gold-dark: #5e7089;
+  --color-gold-line: #c9d3df;
+  --color-secondary: #8496ad;
+  --color-secondary-soft: #edf1f6;
+  --color-on-secondary: #ffffff;
+
+  /* Fixed navy sections (photo banners) and platinum fills, same in both themes */
+  --color-night: #101d35;
+  --color-night-2: #1b2940;
+  --color-night-line: #364154;
+  --color-on-night: #f3f5f8;
+  --color-on-night-muted: #b5c0ce;
+  --color-platinum: #c1cddb;
+  --color-platinum-light: #e6ecf3;
+
+  /* Lines and fields */
+  --color-line: #dfe4ea;
+  --color-line-strong: #c7cfda;
+  --color-field: #ffffff;
+  --color-field-line: #dfe4ea;
+  --color-disabled: #dfe4ea;
+
+  /* Status */
+  --color-success: #2f6b4f;
+  --color-organic: #4f6f52;
+  --color-organic-soft: #e6efe6;
+  --color-warning: #9a6b1f;
+  --color-error: #b42318;
+  --color-on-error: #ffffff;
+  --color-info: #3e5c7a;
+
+  /* Banner backdrops: soft blue-white (light) / moody navy (dark) */
+  --color-hero: #dceafc; /* sky blue, sits between the page (#d2e1fb) and header (#e4fcff) */
+  --color-hero-2: #c4d9f6;
+
+  /* Chart series */
+  --color-chart-1: #101d35;
+  --color-chart-2: #8496ad;
+  --color-chart-3: #4a6489;
+  --color-chart-4: #b9c6d6;
+  --color-chart-5: #2f6b4f;
+  --color-chart-6: #667387;
+
+  --font-heading: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+
+  --radius-card: 0.875rem; /* 14px */
+  --shadow-soft: 0 1px 2px rgb(16 29 53 / 0.04), 0 8px 24px -14px rgb(16 29 53 / 0.14);
+  --shadow-lift: 0 2px 4px rgb(16 29 53 / 0.05), 0 18px 36px -18px rgb(16 29 53 / 0.25);
+  --animate-fade-in: fade-in 0.35s ease-out both;
+  --animate-pop-in: pop-in 0.18s ease-out both;
+
+  --breakpoint-xs: 30rem; /* 480px */
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+[data-theme='dark'] {
+  --color-page: #101521;
+  --color-surface: #1b2332;
+  --color-surface-2: #151c29;
+  --color-elevated: #222b3c;
+  --color-footer: #1b2332;
+
+  --color-ink: #f3f5f8;
+  --color-muted: #b5c0ce;
+  --color-subtle: #8b97a8;
+  --color-brand: #f3f5f8;
+
+  /* Primary buttons become light platinum with navy text */
+  --color-primary: #c1cddb;
+  --color-primary-dark: #e6ecf3;
+  --color-on-primary: #101d35;
+  --color-primary-soft: #232d3f;
+  --color-primary-light: #c1cddb;
+  --color-selected: #263a59;
+
+  --color-accent: #c1cddb;
+  --color-accent-soft: #263a59;
+  --color-gold: #c1cddb;
+  --color-gold-dark: #8496ad;
+  --color-gold-line: #46536a;
+  --color-secondary: #c1cddb;
+  --color-secondary-soft: #263a59;
+  --color-on-secondary: #101d35;
+
+  --color-night: #162238;
+  --color-night-2: #1b2332;
+  --color-night-line: #364154;
+
+  --color-line: #364154;
+  --color-line-strong: #46536a;
+  --color-field: #151c29;
+  --color-field-line: #364154;
+  --color-disabled: #364154;
+
+  --color-success: #7fc29b;
+  --color-organic: #9cc29f;
+  --color-organic-soft: #1e2b25;
+  --color-warning: #e2b868;
+  --color-error: #f08a7e;
+  --color-on-error: #101d35;
+  --color-info: #9db7d3;
+
+  --color-hero: #0f1a2c;
+  --color-hero-2: #0e1420;
+
+  --color-chart-1: #8fa9cf;
+  --color-chart-2: #5b7aa6;
+  --color-chart-3: #c1cddb;
+  --color-chart-4: #3e5576;
+  --color-chart-5: #7fc29b;
+  --color-chart-6: #b5c0ce;
+
+  /* Dark mode uses 1px borders instead of shadows */
+  --shadow-soft: none;
+  --shadow-lift: none;
+  color-scheme: dark;
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-page font-sans text-[15px] leading-relaxed text-ink antialiased;
+    transition:
+      background-color 0.25s ease,
+      color 0.25s ease;
+  }
+  a,
+  button {
+    transition-property: color, background-color, border-color, opacity, box-shadow, transform;
+    transition-duration: 0.2s;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-heading leading-tight;
+  }
+  input,
+  select,
+  textarea {
+    @apply text-ink;
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--color-accent) 35%, transparent);
+  }
+}
+
+/* Unlayered so they win over utility classes. */
+h1,
+h2,
+h3 {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+input[type='checkbox'],
+input[type='radio'],
+input[type='range'] {
+  accent-color: var(--color-primary);
+}
+:where(a, button, summary, [role='switch'], [tabindex]):focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+/* Softens bright photos in dark mode (photos that must stay untouched get .no-dim). */
+[data-theme='dark'] img:not(.no-dim) {
+  filter: brightness(0.9);
+}
+
+/* Fade-in-up on scroll (see components/Reveal.jsx). */
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.6s ease,
+    transform 0.6s ease;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* Home hero: the active dot fills over the slide's duration; its animationend advances the carousel,
+   so pausing (hover/focus) simply pauses the fill. */
+@keyframes hero-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.hero-progress {
+  transform-origin: left;
+  animation: hero-progress 6.5s linear both;
+}
+.hero-paused .hero-progress {
+  animation-play-state: paused;
+}
+
+/* ───────── Components (Tailwind v4 @utility so they compose with @apply) ───────── */
+
+@utility container-page {
+  @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+}
+
+/* Typography scale */
+@utility h-hero {
+  @apply font-heading text-[40px] leading-[1.08] font-semibold sm:text-[56px] lg:text-[64px];
+}
+@utility h-page {
+  @apply font-heading text-[30px] leading-[1.15] font-semibold sm:text-[40px];
+}
+@utility h-section {
+  @apply font-heading text-[24px] leading-tight font-semibold sm:text-[28px];
+}
+@utility eyebrow {
+  @apply text-[11px] font-medium tracking-[0.2em] text-muted uppercase sm:text-xs;
+}
+
+/* Buttons: full pill, 44px tall */
+@utility btn {
+  @apply inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-full px-6 py-2.5 text-sm font-medium whitespace-nowrap transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-45;
+}
+@utility btn-sm {
+  @apply min-h-9 px-4 py-1.5 text-[13px];
+}
+@utility btn-primary {
+  @apply btn bg-primary text-on-primary hover:bg-primary-dark;
+}
+@utility btn-secondary {
+  @apply btn border border-line-strong bg-surface text-ink hover:border-accent hover:bg-primary-soft;
+}
+/* Platinum fill, for buttons on navy photo banners */
+@utility btn-premium {
+  @apply btn bg-platinum-light text-[var(--color-night)] hover:bg-white;
+}
+@utility btn-outline {
+  @apply btn border border-line-strong bg-transparent text-ink hover:border-accent hover:bg-primary-soft;
+}
+@utility btn-ghost {
+  @apply btn text-ink hover:bg-primary-soft;
+}
+@utility btn-danger {
+  @apply btn bg-error text-on-error hover:brightness-95;
+}
+
+/* Cards: soft shadow in light mode, 1px border in dark mode */
+@utility card {
+  @apply rounded-[var(--radius-card)] border border-line bg-surface shadow-[var(--shadow-soft)];
+}
+@utility lift {
+  @apply transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-1 hover:border-line-strong hover:shadow-[var(--shadow-lift)];
+}
+
+/* Forms */
+@utility input {
+  @apply min-h-11 w-full rounded-xl border border-field-line bg-field px-4 py-2.5 text-sm outline-none transition-colors placeholder:text-subtle focus:border-accent focus:ring-2 focus:ring-accent/25 disabled:opacity-55;
+}
+@utility label {
+  @apply mb-1.5 block text-[13px] font-medium text-ink;
+}
+@utility icon-btn {
+  @apply inline-flex size-10 cursor-pointer items-center justify-center rounded-full text-ink transition-colors hover:bg-primary-soft;
+}
+
+/* Chips and badges */
+@utility chip {
+  @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+}
+@utility badge {
+  @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] leading-none font-semibold tracking-[0.12em] uppercase;
+}
+@utility badge-premium {
+  @apply badge border border-gold-line bg-accent-soft text-ink;
+}
+@utility badge-organic {
+  @apply badge border border-organic/30 bg-organic-soft text-organic;
+}
+@utility badge-bestseller {
+  @apply badge bg-primary text-on-primary;
+}
+@utility badge-new {
+  @apply badge border border-line-strong bg-surface text-ink;
+}
+
+@utility table {
+  @apply w-full text-left text-sm;
+  & th {
+    @apply border-b border-line px-3 py-2.5 text-[11px] font-semibold tracking-[0.1em] text-subtle uppercase;
+  }
+  & td {
+    @apply border-b border-line px-3 py-3 align-middle;
+  }
+  & tbody tr:last-child td {
+    @apply border-b-0;
+  }
+}
+@utility animate-fade {
+  animation: var(--animate-fade-in);
+}
+@utility animate-pop {
+  animation: var(--animate-pop-in);
+}
+@utility link {
+  @apply font-medium text-brand underline-offset-4 hover:text-accent hover:underline;
+}
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: white;
+  }
+}
