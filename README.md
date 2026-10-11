@@ -41,6 +41,18 @@ Demo pincodes that we "deliver" to: 411001, 411002, 411004, 411005, 411011 (Cent
 2. Edit `server/.env` and set `MONGO_URI=...`, plus new random `JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET`.
 3. `npm --prefix server run seed` creates the demo data and the super admin (add `-- --reset` to wipe first). With `NODE_ENV=production` it only creates the super admin.
 
+## Deploy on Render (one service)
+
+`render.yaml` sets up one Render web service that runs the API and serves the website from the same address
+(first-party login cookies, nothing cross-site). In Render: **New → Blueprint** → this repository, then fill
+`MONGO_URI`, `CLIENT_URL` (the service's own `https://` address), `SUPERADMIN_EMAIL` and `SUPERADMIN_PASSWORD`.
+The same setup by hand: Web Service, root directory empty, build `npm install && npm run build`, start `npm start`,
+`NODE_ENV=production` and the variables below. Use the Starter plan or above: the free plan sleeps, and the
+background jobs (9 PM deliveries, renewals) don't run while it sleeps.
+
+To host the website separately instead (e.g. Vercel with `client/vercel.json`), set `SERVE_CLIENT=false` on the API
+and `VITE_API_URL` on the website.
+
 ## Environment variables (`server/.env`)
 
 | Key | What it's for |
