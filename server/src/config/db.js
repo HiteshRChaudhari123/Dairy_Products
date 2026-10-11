@@ -37,8 +37,17 @@ export async function connectDB() {
   let uri = env.mongoUri
   let isMemory = false
   if (!uri) {
+    // The in-memory database is a dev dependency, so it is not installed on servers (npm ci --omit=dev).
+    let MongoMemoryServer
+    try {
+      ;({ MongoMemoryServer } = await import('mongodb-memory-server'))
+    } catch {
+      throw new Error(
+        'MONGO_URI is not set. Add your MongoDB Atlas connection string as MONGO_URI in the host\'s environment ' +
+          'variables (and set NODE_ENV=production). The built-in in-memory database is only for local development.',
+      )
+    }
     removeStaleMemoryDbs()
-    const { MongoMemoryServer } = await import('mongodb-memory-server')
     memoryServer = await MongoMemoryServer.create()
     uri = memoryServer.getUri('gavyora')
     isMemory = true
